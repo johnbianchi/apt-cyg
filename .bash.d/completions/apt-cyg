@@ -1,0 +1,41 @@
+# vim:ft=sh
+# Primitive completion mechanism for apt-cyg.
+# Include it statically or dynamically by your completion loader function
+# 
+# Copyright (C) 2013, paprykarz
+#
+# This program is free software; you can redistribute it and/or
+# modify it under the terms of the GNU General Public License
+# as published by the Free Software Foundation; either version 2
+# of the License, or (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# (http://www.fsf.org/licensing/licenses/gpl.html)
+
+# this script requires some packages
+_apt-cyg() {
+case $3 in
+	install)
+		COMPREPLY=(  $( apt-cyg find --ignore-case --noupdate --available-only ^"$2" 2>/dev/null)  )
+		return 0
+		;;
+	*)
+		case $2 in
+			-*)
+				COMPREPLY=( $( compgen -W '-m -c -f -u -i -a --mirror --cache --file --noupdate --ignore-case --available-only --help --version' -- "$2") )
+				return 0
+				;;
+			*)
+				COMPREPLY=( $( compgen -W 'install show remove update find describe packageof' -- "$2") )
+				return 0
+				;;
+		esac
+		;;
+esac
+}
+
+complete -F _apt-cyg apt-cyg

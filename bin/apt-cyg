@@ -156,8 +156,7 @@ command=""
 filepackages=""
 packages=""
 ignorecase=""
-available_only=""
-local_only=""
+restrict_search=""
 
 while test $# -gt 0
 do
@@ -197,12 +196,12 @@ do
 	    ;;
 
     --available-only|-a)
-	    available_only=1
+	    restrict_search=available_only
 	    shift
 	    ;;
 
     --local-only|-l)
-	    local_only=1
+	    restrict_search=local_only
 	    shift
 	    ;;
 
@@ -287,12 +286,12 @@ case "$command" in
 
     for pkg in $packages
     do
-	    if [ $local_only ]; then
+	    if [ x$restrict_search != xavailable_only ]; then
 		    echo 1>&2 ""
 		    echo 1>&2 Searching for installed packages matching $pkg:
 		    awk -v IGNORECASE=$ignorecase '/[^ ]+ [^ ]+ 0/ {if ($1 ~ query) print $1}' query="$pkg" /etc/setup/installed.db
 	    fi
-	    if [ $available_only ]; then
+	    if [ x$restrict_search != xlocal_only ]; then
 		    echo 1>&2 ""
 		    echo 1>&2 Searching for installable packages matching $pkg:
 		    cat setup.ini | awk -v query="$pkg" -v IGNORECASE=$ignorecase \

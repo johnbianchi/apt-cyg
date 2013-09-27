@@ -53,7 +53,8 @@ function usage()
   echo "  --file, -f <file>  : read package names from file"
   echo "  --noupdate, -u     : don't update setup.ini from mirror"
   echo "  --ignore-case, -i  : ignore case in search pattern"
-  echo "  --available-only -a : skip search in installed packages"
+  echo "  --available-only, -a : skip search in installed packages, show all available from setup.ini"
+  echo "  --local-only, -l   : restrict search to installed packages" 
   echo "  --help"
   echo "  --version"
 }
@@ -156,6 +157,7 @@ filepackages=""
 packages=""
 ignorecase=""
 available_only=""
+local_only=""
 
 while test $# -gt 0
 do
@@ -196,6 +198,11 @@ do
 
     --available-only|-a)
 	    available_only=1
+	    shift
+	    ;;
+
+    --local-only|-l)
+	    local_only=1
 	    shift
 	    ;;
 
@@ -280,15 +287,17 @@ case "$command" in
 
     for pkg in $packages
     do
-	    if [ -z $available_only ]; then
+	    if [ $local_only ]; then
 		    echo 1>&2 ""
 		    echo 1>&2 Searching for installed packages matching $pkg:
 		    awk -v IGNORECASE=$ignorecase '/[^ ]+ [^ ]+ 0/ {if ($1 ~ query) print $1}' query="$pkg" /etc/setup/installed.db
 	    fi
-	    echo 1>&2 ""
-	    echo 1>&2 Searching for installable packages matching $pkg:
-	    cat setup.ini | awk -v query="$pkg" -v IGNORECASE=$ignorecase \
-		    'BEGIN{RS="\n\n@ "; FS="\n"; ORS="\n";  } {if ($1 ~ query) {print $1}}'
+	    if [ $available_only ]; then
+		    echo 1>&2 ""
+		    echo 1>&2 Searching for installable packages matching $pkg:
+		    cat setup.ini | awk -v query="$pkg" -v IGNORECASE=$ignorecase \
+			    'BEGIN{RS="\n\n@ "; FS="\n"; ORS="\n";  } {if ($1 ~ query) {print $1}}'
+	    fi
     done
 
   ;;

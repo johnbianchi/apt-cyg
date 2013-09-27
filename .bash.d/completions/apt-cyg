@@ -23,10 +23,14 @@ case $3 in
 		COMPREPLY=(  $( apt-cyg find --ignore-case --noupdate --available-only ^"$2" 2>/dev/null)  )
 		return 0
 		;;
+	remove)
+		COMPREPLY=(  $( apt-cyg find --ignore-case --noupdate --local-only ^"$2" 2>/dev/null)  )
+		return 0
+		;;
 	*)
 		case $2 in
 			-*)
-				COMPREPLY=( $( compgen -W '-m -c -f -u -i -a --mirror --cache --file --noupdate --ignore-case --available-only --help --version' -- "$2") )
+				COMPREPLY=( $( compgen -W '-m -c -f -u -i -a --mirror --cache --file --noupdate --ignore-case --available-only --local-only --help --version' -- "$2") )
 				return 0
 				;;
 			*)

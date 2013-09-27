@@ -11,13 +11,21 @@ In this repository, an updated version of apt-cyg which can be used for
 the new Cygwin mirror site strucuture is available.
 
 
-## Installation
+## Example installation
 
-    $ git clone git@github.com:rcmdnk/apt-cyg.git
-    $ cp apt-cyg/apt-cyg /bin/
+    $ cd /tmp; git clone git@github.com:paprykarz/apt-cyg.git
+    $ cp apt-cyg/apt-cyg /bin/ # or wherever in your $PATH 
+    # If you want to get bash completion, include completion mechanism from .bash.d/completions/apt-cyg
+    # You can include it statically, by sourcing script into current shell, e.g in. ~/.bashrc
+	. .bash.d/completions/apt-cyg # suppose that directory .bash.d/completions/ exists 
+    # or dynamically via completion loader function.
     $ rm -rf apt-cyg # if the local repository is not necessary
 
 ## Usage
+2013-09-26:
+Find: two new options: --ignore-case, --available-only
+Added primitive completion of parameters and available packages
+
 13/08/2013 update:
 This version can be used exactly same way with original apt-cyg.
 Architecture will be set automatically.

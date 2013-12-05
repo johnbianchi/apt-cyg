@@ -4,7 +4,6 @@
 #
 # Copyright (C) 2005-9, Stephen Jungels
 # Copyright (C) 2013, rcmdnk
-# Copyright (C) 2013, paprykarz
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
@@ -22,13 +21,11 @@
 
 # ChangeLog
 # - 2013/08/12: Update for directory changes of Cygwin mirror sites
-# - 2013-09-26: Find: two new options: --ignore-case, --available-only
 # - 2013.11.06: Added yum like args (search info provides ...)
 #               added --no-verbose to wget calls
 
 WGET=`which wget 2> /dev/null`
 BZIP2=`which bzip2 2> /dev/null`
-XZ=`which xz 2> /dev/null`
 TAR=`which tar 2> /dev/null`
 GAWK=`which awk 2> /dev/null`
 if test "-$WGET-" = "--" || test "-$BZIP2-" = "--" || test "-$TAR-" = "--" \
@@ -46,7 +43,7 @@ function usage()
   echo "  \"apt-cyg remove <package names>\" to remove packages"
   echo "  \"apt-cyg update\" to update setup.ini"
   echo "  \"apt-cyg show|list\" to show installed packages"
-  echo "  \"apt-cyg [-i] [-a] find|search <patterns>\" to find packages matching patterns"
+  echo "  \"apt-cyg find|search <patterns>\" to find packages matching patterns"
   echo "  \"apt-cyg describe|info <patterns>\" to describe packages matching patterns"
   echo "  \"apt-cyg packageof|provides <commands or files>\" to locate parent packages"
   echo "Options:"
@@ -55,9 +52,7 @@ function usage()
   echo "  --cache, -c <dir>  : set cache"
   echo "  --file, -f <file>  : read package names from file"
   echo "  --noupdate, -u     : don't update setup.ini from mirror"
-  echo "  --ignore-case, -i  : ignore case in search pattern"
-  echo "  --available-only, -a : skip search in installed packages, show all available from setup.ini"
-  echo "  --local-only, -l   : restrict search to installed packages" 
+# echo "  --ignore-case, -i  : Ignore case distinctions in <patterns> when finding packages"
   echo "  --help"
   echo "  --version"
 }
@@ -76,7 +71,7 @@ function version()
 function findworkspace()
 {
   # default working directory and mirror
-
+  #mirror="http://mirrors.kernel.org/sourceware/cygwin/"
   mirror=ftp://mirror.mcs.anl.gov/pub/cygwin
   arch=x86_64
   if [ "`uname -m`" = "i686" ];then
@@ -106,8 +101,8 @@ function findworkspace()
   fi
   mirrordir="`echo "$mirror" | sed -e "s/:/%3a/g" -e "s:/:%2f:g"`"
 
-  echo 1>&2 Working directory is $cache
-  echo 1>&2 Mirror is $mirror, Architecture is $arch
+  echo Working directory is $cache
+  echo Mirror is $mirror, Architecture is $arch
   mkdir -p "$cache/$mirrordir"
   cd "$cache/$mirrordir"
 }
@@ -124,15 +119,15 @@ function getsetup()
     then
       bunzip2 setup.bz2
       mv setup setup.ini
-      echo 1>&2 Updated setup.ini
+      echo Updated setup.ini
     else
       wget --no-verbose -N $mirror/$arch/setup.ini
       if test -e setup.ini && test $? -eq 0
       then
-        echo 1>&2 Updated setup.ini
+        echo Updated setup.ini
       else
         mv setup.ini-save setup.ini
-        echo 1>&2 Error updating setup.ini, reverting
+        echo Error updating setup.ini, reverting
       fi
     fi
   fi
@@ -158,8 +153,6 @@ dofile=0
 command=""
 filepackages=""
 packages=""
-ignorecase=""
-restrict_search=""
 
 while test $# -gt 0
 do
@@ -193,21 +186,6 @@ do
       shift
     ;;
 
-    --ignore-case|-i)
-	ignorecase=1
-	shift
-	    ;;
-
-    --available-only|-a)
-	    restrict_search=available_only
-	    shift
-	    ;;
-
-    --local-only|-l)
-	    restrict_search=local_only
-	    shift
-	    ;;
-
     --help)
       usage
       exit 0
@@ -230,7 +208,8 @@ do
       shift
     ;;
 
-    update|show|list|find|search|describe|info|packageof|providesi|whatprovides|install|remove)
+    #update|show|find|describe|packageof|install|remove)
+    update|show|list|find|search|describe|info|packageof|provides|install|remove)
       if test "-$command-" = "--"
       then
         command=$1
@@ -289,17 +268,13 @@ case "$command" in
 
     for pkg in $packages
     do
-	    if [ x$restrict_search != xavailable_only ]; then
-		    echo 1>&2 ""
-		    echo 1>&2 Searching for installed packages matching $pkg:
-		    awk -v IGNORECASE=$ignorecase '/[^ ]+ [^ ]+ 0/ {if ($1 ~ query) print $1}' query="$pkg" /etc/setup/installed.db
-	    fi
-	    if [ x$restrict_search != xlocal_only ]; then
-		    echo 1>&2 ""
-		    echo 1>&2 Searching for installable packages matching $pkg:
-		    cat setup.ini | awk -v query="$pkg" -v IGNORECASE=$ignorecase \
-			    'BEGIN{RS="\n\n@ "; FS="\n"; ORS="\n";  } {if ($1 ~ query) {print $1}}'
-	    fi
+      echo ""
+      echo Searching for installed packages matching $pkg:
+      awk '/[^ ]+ [^ ]+ 0/ {if ($1 ~ query) print $1}' query="$pkg" /etc/setup/installed.db
+      echo ""
+      echo Searching for installable packages matching $pkg:
+      cat setup.ini | awk -v query="$pkg" \
+        'BEGIN{RS="\n\n@ "; FS="\n"; ORS="\n"} {if ($1 ~ query) {print $1}}'
     done
 
   ;;
@@ -435,8 +410,7 @@ case "$command" in
           echo Package $package is already installed, skipping
           continue
         fi
-        #apt-cyg --noscripts install $package
-        $0 --noscripts install $package
+        apt-cyg --noscripts install $package
         if ! test $? = 0 ; then warn=1; fi
       done
     fi

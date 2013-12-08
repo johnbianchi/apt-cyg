@@ -26,9 +26,8 @@
 # - 2013.11.06: Added yum like args (search info provides ...)
 #               added --no-verbose to wget calls
 # - 2013.12.03: added xz decompression
-#               adding set -e and set -o pipefail for uncompress failures
-set -e 
-set -o pipefail
+#               reworked tar extract code
+# - 2013.12.06  source apt-cygrc file
 
 WGET=`which wget 2> /dev/null`
 BZIP2=`which bzip2 2> /dev/null`
@@ -37,16 +36,15 @@ XZ=`which xz 2> /dev/null`
 XZCAT=`which xzcat 2> /dev/null`
 TAR=`which tar 2> /dev/null`
 GAWK=`which awk 2> /dev/null`
-if test "-$WGET-" = "--" \
-  || test "-$TAR-" = "--" \
-  || test "-$GAWK-" = "--" \
-  || test "-$BZIP2-" = "--" || test "-$BZCAT-" = "--" \
-  || test "-$XZ-" = "--" || test "-$XZCAT-" = "--"
+
+if test "-$WGET-" = "--" || test "-$TAR-" = "--" || test "-$GAWK-" = "--" || test "-$BZIP2-" = "--" || test "-$BZCAT-" = "--" || test "-$XZ-" = "--" || test "-$XZCAT-" = "--"
 then
   echo You must install wget, tar, gawk, xz and bzip2 to use apt-cyg.
   exit 1
 fi
 
+# source rc file for default var values
+[ -f "$HOME/.apt-cygrc" ] && source "$HOME/.apt-cygrc"
 
 function usage()
 {
@@ -86,7 +84,8 @@ function findworkspace()
 {
   # default working directory and mirror
 
-  mirror=ftp://mirror.mcs.anl.gov/pub/cygwin
+  mirror="${mirror:-ftp://mirror.mcs.anl.gov/pub/cygwin}"
+
   arch=x86_64
   if [ "`uname -m`" = "i686" ];then
     arch=x86
@@ -128,14 +127,14 @@ function getsetup()
   then
     touch setup.ini
     mv setup.ini setup.ini-save
-    wget --no-verbose -N $mirror/$arch/setup.bz2
+    wget $WGET_OPTS -N $mirror/$arch/setup.bz2
     if test -e setup.bz2 && test $? -eq 0
     then
       bunzip2 setup.bz2
       mv setup setup.ini
       echo 1>&2 Updated setup.ini
     else
-      wget --no-verbose -N $mirror/$arch/setup.ini
+      wget $WGET_OPTS -N $mirror/$arch/setup.ini
       if test -e setup.ini && test $? -eq 0
       then
         echo 1>&2 Updated setup.ini
@@ -220,6 +219,17 @@ do
     --help)
       usage
       exit 0
+    ;;
+
+    --quiet|-q)
+      WGET_OPTS="--quiet"
+      shift
+    ;;
+
+    --verboses|-v)
+      #((verbose++))
+      unset WGET_OPTS
+      shift
     ;;
 
     --version)
@@ -362,7 +372,8 @@ case "$command" in
     for pkg in $packages
     do
 
-    already=`grep -c "^$pkg " /etc/setup/installed.db`
+    already=`grep -c -- "^$pkg " /etc/setup/installed.db`
+
     if test $already -ge 1
     then
       echo Package $pkg is already installed, skipping
@@ -372,7 +383,6 @@ case "$command" in
     echo Installing $pkg
 
     # look for package and save desc file
-
     mkdir -p "release/$pkg"
     cat setup.ini | awk > "release/$pkg/desc" -v package="$pkg" \
       'BEGIN{RS="\n\n@ "; FS="\n"} {if ($1 == package) {desc = $0; px++}} \
@@ -401,7 +411,7 @@ case "$command" in
     file=`basename $install`
     cd "release/$pkg"
 
-    wget --no-verbose -nc $mirror/$install
+    wget $WGET_OPTS -nc $mirror/$install
 
     # check the md5
     digest=`cat "desc" | awk '/^install: / { print $4; exit }'`
@@ -415,10 +425,21 @@ case "$command" in
     echo "Unpacking..."
     # this does not test for extension... nor does it see if the uncompress failed
     #cat $file | bunzip2 | tar > "/etc/setup/$pkg.lst" xvf - -C /
-
-    # hack to decompress by either bzcat or xzcat depending in the extension
-    ext=${file##*.}	# should be .bz2 or .xz but not testing this
-    ${ext:0:1}zcat $file | tar > "/etc/setup/$pkg.lst" xvf - -C /
+    case ${file##*.} in
+      gz|tgz)
+	tar > "/etc/setup/$pkg.lst" xvf $file --gzip -C /
+	;;
+      xz|txz)
+	tar > "/etc/setup/$pkg.lst" xvf $file --xz -C /
+	;;
+      bz2|bz|tbz)
+	tar > "/etc/setup/$pkg.lst" xvf $file --bzip -C /
+	;;
+      *)
+	echo ${0##*/}: unknow compression format $file, exiting
+	exit 1 
+	;;	
+    esac
 
     gzip -f "/etc/setup/$pkg.lst"
     cd ../..

@@ -1,0 +1,5 @@
+# apt-cyg rc file
+#mirror=ftp://mirror.mcs.anl.gov/pub/cygwin
+mirror="http://mirrors.kernel.org/sourceware/cygwin/"
+WGET_OPTS="--no-verbose"
+#

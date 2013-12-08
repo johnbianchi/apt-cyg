@@ -30,11 +30,12 @@ the new Cygwin mirror site strucuture is available.
 
 2013.12.07:
 Added ~/.apt-cygrc to be sourced. use to store your default mirror.
+add -v for verbose and -q for quiet (mostly just wget calls) 
 Also can hold WGET_OPTS which if set to "--quiet" will quiet up all the wget calls
 
 2013.12.05:
-add -v for verbose and -q for quiet (mostly just wget calls) 
 added support for .xz tar files (vim-minimal is an xz file now: vim-minimal-7.3.1314-1.tar.xz)
+create yum compatible (search=find,  list=show, info=describe, provides=packageof)
 * TODO: need to handle failed extractions better, currently apt-cyg thinks all went well.
 
 2013-09-26:

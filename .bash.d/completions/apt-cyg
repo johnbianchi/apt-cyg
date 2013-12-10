@@ -34,7 +34,7 @@ case $3 in
 				return 0
 				;;
 			*)
-				COMPREPLY=( $( compgen -W 'install show remove update find describe packageof' -- "$2") )
+				COMPREPLY=( $( compgen -W 'install show list remove update find search describe info packageof whatprovides' -- "$2") )
 				return 0
 				;;
 		esac

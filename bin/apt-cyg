@@ -249,7 +249,7 @@ do
       shift
     ;;
 
-    update|show|list|find|search|describe|info|packageof|providesi|whatprovides|install|remove)
+    update|show|list|find|search|describe|info|packageof|provides|whatprovides|install|remove)
       if test "-$command-" = "--"
       then
         command=$1

@@ -44,6 +44,7 @@ then
 fi
 
 # source rc file for default var values
+WGET_OPTS="--no-verbose"
 [ -f "$HOME/.apt-cygrc" ] && source "$HOME/.apt-cygrc"
 
 function usage()
@@ -57,16 +58,18 @@ function usage()
   echo "  \"apt-cyg describe|info <patterns>\" to describe packages matching patterns"
   echo "  \"apt-cyg packageof|provides <commands or files>\" to locate parent packages"
   echo "Options:"
-  echo "  --mirror, -m <url> : set mirror (Put x86/x86_64 at the end"
-  echo "                       if you want to specify architecture)"
-  echo "  --cache, -c <dir>  : set cache"
-  echo "  --file, -f <file>  : read package names from file"
-  echo "  --noupdate, -u     : don't update setup.ini from mirror"
-  echo "  --ignore-case, -i  : ignore case in search pattern"
+  echo "  --mirror, -m <url>   : set mirror (Put x86/x86_64 at the end"
+  echo "                         if you want to specify architecture)"
+  echo "  --cache, -c <dir>    : set cache"
+  echo "  --file, -f <file>    : read package names from file"
+  echo "  --noupdate, -u       : don't update setup.ini from mirror"
+  echo "  --ignore-case, -i    : ignore case in search pattern"
   echo "  --available-only, -a : skip search in installed packages, show all available from setup.ini"
-  echo "  --local-only, -l   : restrict search to installed packages" 
-  echo "  --help"
-  echo "  --version"
+  echo "  --local-only, -l     : restrict search to installed packages" 
+  echo "  --verbose, -v        : no verbose control to wget (remove default --no-verbose)"
+  echo "  --quiet, -q          : set --quiet to wget output"
+  echo "  --help, -h"
+  echo "  --version, -V"
 }
 
 
@@ -75,7 +78,7 @@ function version()
 {
   echo "apt-cyg version 0.57"
   echo "Written by Stephen Jungels"
-  echo ""
+  echo "Revisions by paprykarz, John Bianchi"
   echo "Copyright (c) 2005-9 Stephen Jungels.  Released under the GPL."
 }
 
@@ -216,7 +219,7 @@ do
 	    shift
 	    ;;
 
-    --help)
+    --help|-h)
       usage
       exit 0
     ;;
@@ -232,7 +235,7 @@ do
       shift
     ;;
 
-    --version)
+    --version|-V)
       version
       exit 0
     ;;
